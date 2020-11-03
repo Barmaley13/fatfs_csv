@@ -1,6 +1,14 @@
-# libscv #
+# FatFS CSV #
 
-A simple C library for parsing and writing CSV files.
+The [original library](https://github.com/winobes/libscv) has been modified to work
+with [FatFS](http://elm-chan.org/fsw/ff/00index_e.html) by chan.
+
+This branch is using following [logger](https://github.com/rxi/log.c) but log statements can be
+replaced with `printf` statements if desired.
+
+This branch of the library won't compile properly with current make. The intent to use this within
+embedded environment. Most likely you have to figure out how to communicate with SD card first as well
+as how to redirect stdio output to UART (for logging purposes).
 
 ## Description ##
 

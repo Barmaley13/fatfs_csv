@@ -1,23 +1,64 @@
+#include <ff.h>
 #include <csv.h>
+#include "log.h"
 
-int main () {
+FATFS	fat;
+FIL		file;
 
-        CSV_BUFFER *my_buffer = csv_create_buffer();
-        printf("created buffer\n");
-        csv_load(my_buffer, "testlist.csv");
-        printf("loaded from file\n");
-        csv_set_field(my_buffer, 10, 9, "test");
-        printf("set first field to \"test\"\n");
-        csv_save("testsave.csv", my_buffer);
-        printf("saved buffer\n");
-        size_t my_string_size = 10;
-        char *my_string = malloc(my_string_size + 1);
-        csv_get_field(my_string, my_string_size, my_buffer, 10, 9);
-        printf("Got string = \"%s\"\n", my_string);
-        csv_destroy_buffer(my_buffer);
-        printf("destroyed buffer\n");
-        free(my_string);
-        printf("Free'd string\n");
 
-return 0;
+int main ()
+{
+	FRESULT res;
+	const TCHAR *file_path = "0:/csv/test.csv";
+	const char *new_header = "Test";
+
+	// Mount drive
+	log_debug("Mounting SD card");
+	res = f_mount(&fat, "", 1);
+	if (res != FR_OK)
+	{
+		log_error("f_mount pb: %d", res);
+		return;
+	}
+	
+	res = f_open(&file, file_path, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
+	if (res != FR_OK)
+	{
+		log_error("f_open pb: %d", res);
+	}
+
+	log_info("Creating buffer");
+	CSV_BUFFER *buffer = csv_create_buffer();
+	
+	log_info("Loading csv");
+	csv_load(buffer, &file);
+	
+	// Print buffer
+	uint32_t i, j;
+	for (i = 0; i < buffer->rows; i++)
+	{
+		for (j = 0; j < buffer->width[i]; j++)
+		{
+			//printf("%-10s\t", buffer->field[i][j]->text);
+			log_info("buff[%d][%d] = %s", i, j, buffer->field[i][j]->text);
+		}
+		//printf("\n");
+	}
+	
+	// Let try overwriting one of the header fields
+	log_info("Saving csv");
+	csv_set_field(buffer, 0, 1, (char *) new_header);
+	csv_save(&file, buffer);
+
+	log_info("Destroying buffer");
+	csv_destroy_buffer(buffer);
+	
+	// Close file
+	res = f_close(&file);
+	if (res != FR_OK)
+	{
+		log_error("f_close pb: %d", res);
+	}
+
+	while (1);
 }
